@@ -197,7 +197,7 @@ export function AppSidebar() {
       // Restore saved state
       setOpenDropdowns(savedDropdownStates)
     }
-  }, [state]) // Remove openDropdowns and savedDropdownStates from dependencies
+  }, [state, openDropdowns, savedDropdownStates]) // Remove openDropdowns and savedDropdownStates from dependencies
 
   const toggleDropdown = (title: string) => {
     // Only allow toggling when sidebar is expanded
