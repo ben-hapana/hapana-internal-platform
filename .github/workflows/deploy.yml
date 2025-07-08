@@ -62,9 +62,9 @@ jobs:
           --port 3000 \
           --set-env-vars "NODE_ENV=production" \
           --set-env-vars "NEXT_TELEMETRY_DISABLED=1" \
-          --set-env-vars "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}" \
-          --set-env-vars "FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}" \
-          --set-env-vars "FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}" \
+          --set-env-vars "FIREBASE_ADMIN_PROJECT_ID=${{ secrets.FIREBASE_ADMIN_PROJECT_ID }}" \
+          --set-env-vars "FIREBASE_ADMIN_CLIENT_EMAIL=${{ secrets.FIREBASE_ADMIN_CLIENT_EMAIL }}" \
+          --set-env-vars "FIREBASE_ADMIN_PRIVATE_KEY=${{ secrets.FIREBASE_ADMIN_PRIVATE_KEY }}" \
           --set-env-vars "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
           --set-env-vars "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}" \
           --set-env-vars "NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}" \
