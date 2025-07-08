@@ -130,43 +130,55 @@ jobs:
         status: custom
         custom_payload: |
           {
-            "text": "✅ Hapana Internal Platform deployed successfully!",
             "attachments": [
               {
-                "color": "good",
+                "color": "#36a64f",
+                "title": "🚀 Fast Preview Deployment Successful!",
+                "title_link": "${{ env.SERVICE_URL }}",
+                "text": "Quick feedback deployment ready for testing",
                 "fields": [
-                  {
-                    "title": "Repository",
-                    "value": "${{ github.repository }}",
-                    "short": true
-                  },
                   {
                     "title": "Branch",
                     "value": "${{ github.ref_name }}",
                     "short": true
                   },
                   {
-                    "title": "Service URL",
-                    "value": "${{ env.SERVICE_URL }}",
-                    "short": false
-                  },
-                  {
-                    "title": "Commit",
-                    "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>",
+                    "title": "Type",
+                    "value": "Fast Preview",
                     "short": true
                   },
                   {
                     "title": "Author",
                     "value": "${{ github.actor }}",
                     "short": true
+                  },
+                  {
+                    "title": "Duration",
+                    "value": "~5 minutes",
+                    "short": true
                   }
                 ],
+                "footer": "Hapana3 Fast Preview Pipeline",
                 "actions": [
                   {
                     "type": "button",
-                    "text": "🚀 Open App",
-                    "url": "${{ env.SERVICE_URL }}",
-                    "style": "primary"
+                    "text": "🌐 Preview App",
+                    "url": "${{ env.SERVICE_URL }}"
+                  },
+                  {
+                    "type": "button",
+                    "text": "👨‍💼 Admin App",
+                    "url": "${{ env.SERVICE_URL }}"
+                  },
+                  {
+                    "type": "button",
+                    "text": "🔧 API",
+                    "url": "${{ env.SERVICE_URL }}/api/health"
+                  },
+                  {
+                    "type": "button",
+                    "text": "📋 Create Pull Request",
+                    "url": "https://github.com/${{ github.repository }}/compare/${{ github.ref_name }}?expand=1"
                   }
                 ]
               }
@@ -182,44 +194,60 @@ jobs:
         status: custom
         custom_payload: |
           {
-            "text": "❌ Hapana Internal Platform deployment failed!",
             "attachments": [
               {
-                "color": "danger",
+                "color": "#ff0000",
+                "title": "❌ Hapana Internal Platform deployment failed!",
+                "title_link": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "text": "Quick feedback deployment needs attention",
                 "fields": [
-                  {
-                    "title": "Repository",
-                    "value": "${{ github.repository }}",
-                    "short": true
-                  },
                   {
                     "title": "Branch",
                     "value": "${{ github.ref_name }}",
                     "short": true
                   },
                   {
-                    "title": "Commit",
-                    "value": "<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>",
+                    "title": "Type",
+                    "value": "Fast Preview",
                     "short": true
                   },
                   {
                     "title": "Author",
                     "value": "${{ github.actor }}",
                     "short": true
+                  },
+                  {
+                    "title": "Failed Stage",
+                    "value": "Web Admin Deployment",
+                    "short": true
+                  },
+                  {
+                    "title": "Service Name",
+                    "value": "${{ env.SERVICE_NAME }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Region",
+                    "value": "${{ env.REGION }}",
+                    "short": true
                   }
                 ],
+                "footer": "Hapana3 Fast Preview Pipeline",
                 "actions": [
                   {
                     "type": "button",
-                    "text": "📋 View GitHub Actions",
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                    "style": "danger"
+                    "text": "🔗 View GitHub Actions",
+                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                   },
                   {
                     "type": "button",
-                    "text": "📊 Cloud Run Logs",
-                    "url": "https://console.cloud.google.com/run/detail/${{ env.REGION }}/${{ env.SERVICE_NAME }}/logs?project=${{ env.PROJECT_ID }}",
-                    "style": "default"
+                    "text": "📋 View Repository",
+                    "url": "https://github.com/${{ github.repository }}"
+                  },
+                  {
+                    "type": "button",
+                    "text": "☁️ Cloud Run Logs",
+                    "url": "https://console.cloud.google.com/run/detail/${{ env.REGION }}/${{ env.SERVICE_NAME }}/logs?project=${{ env.PROJECT_ID }}"
                   }
                 ]
               }
