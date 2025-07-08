@@ -8,9 +8,12 @@ interface SearchHit {
   content: string;
   status: string;
   priority: string;
-  created: string;
-  updated: string;
-  highlights?: Record<string, string[]>;
+  created: number;
+  updated: number;
+  highlights?: {
+    title?: string;
+    content?: string;
+  };
 }
 
 interface SearchResultSet {

@@ -13,7 +13,7 @@ Successfully set up the complete deployment infrastructure for the Hapana Intern
 ### 2. GitHub Repository Setup
 - ✅ Created public repository: `ben-hapana/hapana-internal-platform`
 - ✅ Pushed clean codebase without any secrets in git history
-- ✅ All 31 secrets configured in GitHub Actions secrets
+- ✅ All 33 secrets configured in GitHub Actions secrets (including GCP_SA_KEY and GCP_PROJECT_ID)
 
 ### 3. Secrets Configuration
 All secrets are now available in both Google Secret Manager and GitHub Actions:
@@ -69,6 +69,10 @@ All secrets are now available in both Google Secret Manager and GitHub Actions:
 - `NEXT_PUBLIC_APP_URL`
 - `NODE_ENV`
 
+#### GitHub Actions Deployment (2 secrets)
+- `GCP_SA_KEY` (Service Account JSON for secure authentication)
+- `GCP_PROJECT_ID` (Google Cloud Project ID)
+
 ## Repository Links
 - **GitHub Repository**: https://github.com/ben-hapana/hapana-internal-platform
 - **Google Cloud Project**: hapana-internal-platform
@@ -80,10 +84,10 @@ All secrets are now available in both Google Secret Manager and GitHub Actions:
 - ✅ All secrets properly encrypted in both Google Secret Manager and GitHub Actions
 
 ## Next Steps
-1. The GitHub Actions workflow (`.github/workflows/deploy.yml`) is ready to deploy to Cloud Run
-2. Service account key needs to be added to `.github/service-accounts/` directory for deployment
-3. Environment variables will be automatically injected from GitHub secrets during deployment
-4. The platform is ready for production deployment
+1. ✅ The GitHub Actions workflow (`.github/workflows/deploy.yml`) is ready to deploy to Cloud Run
+2. ✅ Service account authentication configured securely via GitHub secrets (not files)
+3. ✅ Environment variables will be automatically injected from GitHub secrets during deployment
+4. ✅ **DEPLOYMENT IN PROGRESS** - Push to main branch triggered automated deployment!
 
 ## Verification Commands
 ```bash

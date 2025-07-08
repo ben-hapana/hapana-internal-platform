@@ -4,6 +4,7 @@ import { adminApp } from '@/firebase/firebase-admin'
 import { fileUploadService } from '@/lib/services/finance-operations/file-upload-service'
 import { financeService } from '@/lib/services/finance-operations/finance-service'
 import { Timestamp } from 'firebase/firestore'
+import { FileReference, FinanceOperation } from '@/lib/types/finance-operations'
 
 const auth = getAuth(adminApp)
 
@@ -112,8 +113,8 @@ export async function POST(request: NextRequest) {
 
 async function triggerCloudRunProcessing(
   executionId: string,
-  fileReference: any,
-  operation: any
+  fileReference: FileReference,
+  operation: FinanceOperation
 ) {
   try {
     const cloudRunUrl = process.env.CLOUD_RUN_FINANCE_OPERATIONS_URL
@@ -136,7 +137,7 @@ async function triggerCloudRunProcessing(
       scriptPath: operation.scriptPath,
       fileReference: {
         id: fileReference.id,
-        downloadUrl: fileReference.downloadUrl,
+        downloadUrl: fileReference.downloadUrl || '',
         filename: fileReference.filename,
         originalName: fileReference.originalName
       },

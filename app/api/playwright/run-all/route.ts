@@ -1,18 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const playwrightDir = process.env.PLAYWRIGHT_TESTS_DIR || '/Users/bencochrane/Code/playwright'
     
     // Run all tests with JSON reporter for results
     const command = `cd ${playwrightDir} && npx playwright test --reporter=json --output-dir=test-results`
     
-    // Execute tests in background
-    const testExecution = execAsync(command)
+    // Execute tests in background and handle the promise
+    execAsync(command)
       .then((result) => {
         console.log('All tests completed:', result.stdout)
         // Parse results and store/emit updates

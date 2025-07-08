@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  hapana-platform:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_FIREBASE_API_KEY=dummy_api_key_for_build
+        - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=dummy_domain_for_build
+        - NEXT_PUBLIC_FIREBASE_PROJECT_ID=dummy_project_for_build
+        - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=dummy_bucket_for_build
+        - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=dummy_sender_for_build
+        - NEXT_PUBLIC_FIREBASE_APP_ID=dummy_app_id_for_build
+        - NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=dummy_measurement_for_build
+        - OPENAI_API_KEY=sk-dummy_openai_key_for_build
+    ports:
+      - "3000:3000"
+    environment:
+      # App Configuration
+      - NODE_ENV=production
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - PORT=3000
+      
+      # Firebase Client Config (Override build args with real values)
+      - NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyDummyApiKeyForLocalTesting
+      - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=hapana-internal-platform.firebaseapp.com
+      - NEXT_PUBLIC_FIREBASE_PROJECT_ID=hapana-internal-platform
+      - NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=hapana-internal-platform.appspot.com
+      - NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
+      - NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abcdef123456
+      - NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-ABCDEF1234
+      
+      # Firebase Admin Config
+      - FIREBASE_PROJECT_ID=hapana-internal-platform
+      - FIREBASE_CLIENT_EMAIL=firebase-adminsdk-dummy@hapana-internal-platform.iam.gserviceaccount.com
+      - FIREBASE_PRIVATE_KEY=dummy_private_key_for_local_testing
+      
+      # HappyFox Configuration
+      - HAPPYFOX_API_KEY=dummy_happyfox_api_key
+      - HAPPYFOX_API_URL=https://dummy.happyfox.com/api/1.1/
+      - HAPPYFOX_WEBHOOK_SECRET=dummy_webhook_secret
+      - HAPPYFOX_STAFF_EMAIL=dummy@example.com
+      
+      # Jira Configuration  
+      - JIRA_HOST=https://dummy.atlassian.net
+      - JIRA_USERNAME=dummy@example.com
+      - JIRA_API_TOKEN=dummy_jira_token
+      - JIRA_PROJECT_KEY=DUMMY
+      
+      # OpenAI Configuration
+      - OPENAI_API_KEY=sk-dummy_openai_key_for_local_testing
+      
+      # Algolia Configuration
+      - NEXT_PUBLIC_ALGOLIA_APP_ID=dummy_algolia_app_id
+      - NEXT_PUBLIC_ALGOLIA_SEARCH_API_KEY=dummy_search_key
+      - ALGOLIA_ADMIN_API_KEY=dummy_admin_key
+      
+      # Playwright Configuration
+      - PLAYWRIGHT_TESTS_DIR=/app/playwright-tests
+      - PLAYWRIGHT_RESULTS_DIR=/app/test-results
+      - PLAYWRIGHT_WEBHOOK_URL=http://localhost:3000/api/test-results
+      
+      # Google Cloud Configuration
+      - GOOGLE_CLOUD_PROJECT=hapana-internal-platform
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/service-account.json
+      - CLOUD_RUN_FINANCE_OPERATIONS_URL=https://dummy-finance-operations-service.run.app
+      
+      # Webhook Security
+      - WEBHOOK_SECRET_KEY=dummy_webhook_secret_key_for_local_testing
+      - INTERNAL_API_SECRET=dummy_internal_api_secret_for_local_testing
+      
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Resource limits to match Cloud Run
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.25' 

@@ -158,27 +158,12 @@ jobs:
                     "short": true
                   }
                 ],
-                "footer": "Hapana3 Fast Preview Pipeline",
+                "footer": "Hapana Internal Platform Pipeline",
                 "actions": [
                   {
                     "type": "button",
                     "text": "🌐 Preview App",
                     "url": "${{ env.SERVICE_URL }}"
-                  },
-                  {
-                    "type": "button",
-                    "text": "👨‍💼 Admin App",
-                    "url": "${{ env.SERVICE_URL }}"
-                  },
-                  {
-                    "type": "button",
-                    "text": "🔧 API",
-                    "url": "${{ env.SERVICE_URL }}/api/health"
-                  },
-                  {
-                    "type": "button",
-                    "text": "📋 Create Pull Request",
-                    "url": "https://github.com/${{ github.repository }}/compare/${{ github.ref_name }}?expand=1"
                   }
                 ]
               }

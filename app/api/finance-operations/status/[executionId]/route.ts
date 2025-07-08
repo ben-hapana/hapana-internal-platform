@@ -7,7 +7,7 @@ const auth = getAuth(adminApp)
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { executionId: string } }
+  { params }: { params: Promise<{ executionId: string }> }
 ) {
   try {
     // Verify authentication
@@ -23,7 +23,7 @@ export async function GET(
     const decodedToken = await auth.verifyIdToken(token)
     const userId = decodedToken.uid
 
-    const { executionId } = params
+    const { executionId } = await params
 
     // Get execution details
     const execution = await financeService.getExecution(executionId)
