@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/firebase-auth"
 import { toast } from "sonner"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Home,
   TestTube,
@@ -184,20 +184,26 @@ export function AppSidebar() {
   // State to track which dropdowns are open
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(defaultDropdownStates)
   
-  // State to remember dropdown states before collapse
-  const [savedDropdownStates, setSavedDropdownStates] = useState<Record<string, boolean>>(defaultDropdownStates)
+  // Use refs to track current state values
+  const openDropdownsRef = useRef(openDropdowns)
+  const savedDropdownStatesRef = useRef<Record<string, boolean>>(defaultDropdownStates)
+
+  // Update ref when state changes
+  useEffect(() => {
+    openDropdownsRef.current = openDropdowns
+  }, [openDropdowns])
 
   // Handle sidebar state changes
   useEffect(() => {
     if (state === "collapsed") {
       // Save current state and close all dropdowns
-      setSavedDropdownStates(openDropdowns)
+      savedDropdownStatesRef.current = openDropdownsRef.current
       setOpenDropdowns({})
     } else if (state === "expanded") {
       // Restore saved state
-      setOpenDropdowns(savedDropdownStates)
+      setOpenDropdowns(savedDropdownStatesRef.current)
     }
-  }, [state, openDropdowns, savedDropdownStates]) // Remove openDropdowns and savedDropdownStates from dependencies
+  }, [state])
 
   const toggleDropdown = (title: string) => {
     // Only allow toggling when sidebar is expanded
