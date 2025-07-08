@@ -6,10 +6,11 @@ import { financeService } from '@/lib/services/finance-operations/finance-servic
 import { Timestamp } from 'firebase/firestore'
 import { FileReference, FinanceOperation } from '@/lib/types/finance-operations'
 
-const auth = getAuth(adminApp)
-
 export async function POST(request: NextRequest) {
   try {
+    // Initialize Firebase Auth inside the function to avoid build-time errors
+    const auth = getAuth(adminApp)
+    
     // Verify authentication
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {

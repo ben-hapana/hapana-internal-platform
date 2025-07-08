@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuth } from 'firebase-admin/auth'
 import { adminApp } from '@/firebase/firebase-admin'
 import { financeService } from '@/lib/services/finance-operations/finance-service'
-
-const auth = getAuth(adminApp)
+import { OperationExecution, FileReference } from '@/lib/types/finance-operations'
 
 export async function GET(request: NextRequest) {
   try {
+    // Initialize Firebase Auth inside the function to avoid build-time errors
+    const auth = getAuth(adminApp)
+    
     // Verify authentication
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -24,12 +26,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '20', 10)
 
-    // Get user's executions
+    // Get executions for the user
     const executions = await financeService.getExecutionsByUser(userId, limit)
 
     return NextResponse.json({
       success: true,
-      executions: executions.map(execution => ({
+      executions: executions.map((execution: OperationExecution) => ({
         id: execution.id,
         operationId: execution.operationId,
         operationName: execution.operationName,
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
           size: execution.inputFile.size,
           uploadedAt: execution.inputFile.uploadedAt
         },
-        outputFiles: execution.outputFiles?.map(file => ({
+        outputFiles: execution.outputFiles?.map((file: FileReference) => ({
           id: file.id,
           originalName: file.originalName,
           size: file.size,

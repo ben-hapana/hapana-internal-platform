@@ -3,13 +3,14 @@ import { getAuth } from 'firebase-admin/auth'
 import { adminApp } from '@/firebase/firebase-admin'
 import { financeService } from '@/lib/services/finance-operations/finance-service'
 
-const auth = getAuth(adminApp)
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ executionId: string }> }
 ) {
   try {
+    // Initialize Firebase Auth inside the function to avoid build-time errors
+    const auth = getAuth(adminApp)
+    
     // Verify authentication
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {

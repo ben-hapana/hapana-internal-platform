@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
+  // Skip static generation for API routes during build
+  skipMiddlewareUrlNormalize: true,
+  
   // Experimental features for better performance
   experimental: {
     // Enable optimized package imports
