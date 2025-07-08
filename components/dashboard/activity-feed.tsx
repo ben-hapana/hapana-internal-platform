@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, XCircle, RefreshCw, Clock, TestTube } from 'lucide-react'
@@ -29,7 +29,7 @@ export function ActivityFeed({ className, maxItems = 8 }: ActivityFeedProps) {
   const [activities, setActivities] = useState<TestResult[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       const response = await fetch(`/api/test-results?limit=${maxItems}`)
       const data = await response.json()
@@ -44,7 +44,7 @@ export function ActivityFeed({ className, maxItems = 8 }: ActivityFeedProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [maxItems])
 
   useEffect(() => {
     // Initial fetch
@@ -54,7 +54,7 @@ export function ActivityFeed({ className, maxItems = 8 }: ActivityFeedProps) {
     const interval = setInterval(fetchActivities, 15000)
 
     return () => clearInterval(interval)
-  }, [maxItems])
+  }, [fetchActivities])
 
   const getActivityIcon = (status: TestResult['status']) => {
     switch (status) {

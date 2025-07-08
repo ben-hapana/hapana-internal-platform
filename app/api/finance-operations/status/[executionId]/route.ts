@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuth } from 'firebase-admin/auth'
-import { adminApp } from '@/firebase/firebase-admin'
 import { financeService } from '@/lib/services/finance-operations/finance-service'
 
 export async function GET(
@@ -8,7 +6,9 @@ export async function GET(
   { params }: { params: Promise<{ executionId: string }> }
 ) {
   try {
-    // Initialize Firebase Auth inside the function to avoid build-time errors
+    // Dynamically import Firebase admin to avoid build-time initialization
+    const { getAuth } = await import('firebase-admin/auth')
+    const { adminApp } = await import('@/firebase/firebase-admin')
     const auth = getAuth(adminApp)
     
     // Verify authentication

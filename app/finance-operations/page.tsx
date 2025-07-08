@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/firebase-auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -63,12 +63,32 @@ export default function FinanceOperationsPage() {
   const [loading, setLoading] = useState(true)
   const [showConfirmation, setShowConfirmation] = useState(false)
 
+  const loadExecutions = useCallback(async () => {
+    try {
+      if (!user) return
+
+      const token = await user.getIdToken()
+      const response = await fetch('/api/finance-operations/executions', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setExecutions(data.executions || [])
+      }
+    } catch (error) {
+      console.error('Failed to load executions:', error)
+    }
+  }, [user])
+
   useEffect(() => {
     if (user) {
       loadOperations()
       loadExecutions()
     }
-  }, [user])
+  }, [user, loadExecutions])
 
   const loadOperations = async () => {
     try {
@@ -87,26 +107,6 @@ export default function FinanceOperationsPage() {
       toast.error('Failed to load operations')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadExecutions = async () => {
-    try {
-      if (!user) return
-
-      const token = await user.getIdToken()
-      const response = await fetch('/api/finance-operations/executions', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setExecutions(data.executions || [])
-      }
-    } catch (error) {
-      console.error('Failed to load executions:', error)
     }
   }
 

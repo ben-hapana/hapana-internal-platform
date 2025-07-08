@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -52,7 +52,7 @@ export default function QAPage() {
   const { user } = useAuth()
 
   // Fetch test results from API
-  const fetchTestResults = async () => {
+  const fetchTestResults = useCallback(async () => {
     if (!user) return
     
     try {
@@ -80,7 +80,7 @@ export default function QAPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, selectedEnvironment])
 
   useEffect(() => {
     // Initial fetch
@@ -90,7 +90,7 @@ export default function QAPage() {
     const interval = setInterval(fetchTestResults, 10000)
 
     return () => clearInterval(interval)
-  }, [user, selectedEnvironment])
+  }, [fetchTestResults])
 
   // Load sample data if no real data and not loading
   useEffect(() => {
