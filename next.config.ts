@@ -12,9 +12,6 @@ const nextConfig: NextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
-  // Performance optimizations
-  swcMinify: true,
-  
   // Experimental features for better performance
   experimental: {
     // Enable optimized package imports
