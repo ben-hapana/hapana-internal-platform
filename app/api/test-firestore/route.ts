@@ -1,62 +1,64 @@
+import { firestoreAdmin } from '@/lib/firestore-admin'
 import { NextResponse } from 'next/server'
-import { serverTestResultsService } from '@/lib/firestore-admin'
 
 export async function POST() {
   try {
-    console.log('Testing Firestore connection...')
+    console.log('🧪 Testing Firestore connection...')
     
-    // Test creating a simple test result
-    const testId = await serverTestResultsService.create({
-      testName: 'Test Connection',
+    // Create a test document
+    const testId = await firestoreAdmin.createTestResult({
+      testName: 'Firestore Connection Test',
       environment: 'development',
       status: 'passed',
-      userId: 'test-user',
-      userEmail: 'test@example.com'
+      userId: 'system',
+      userEmail: 'system@hapana.com'
     })
-    
-    console.log('Test result created with ID:', testId)
-    
+
+    console.log('✅ Test document created with ID:', testId)
+
     return NextResponse.json({
       success: true,
-      message: 'Firestore connection working',
-      testId: testId
+      message: 'Firestore connection successful',
+      testDocumentId: testId,
+      timestamp: new Date().toISOString()
     })
+
   } catch (error) {
-    console.error('Firestore test error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Firestore connection failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
+    console.error('❌ Firestore test failed:', error)
+    
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 }
 
 export async function GET() {
   try {
-    console.log('Testing Firestore read...')
+    console.log('🔍 Fetching recent test results...')
     
-    const results = await serverTestResultsService.getRecent(5)
-    
-    console.log('Retrieved test results:', results.length)
-    
+    const results = await firestoreAdmin.getTestResults(undefined, 5)
+
     return NextResponse.json({
       success: true,
-      message: 'Firestore read working',
       count: results.length,
-      results: results
+      results: results.map(result => ({
+        id: result.id,
+        testName: result.testName,
+        status: result.status,
+        timestamp: result.timestamp
+      })),
+      timestamp: new Date().toISOString()
     })
+
   } catch (error) {
-    console.error('Firestore read error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Firestore read failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
+    console.error('❌ Failed to fetch test results:', error)
+    
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 } 

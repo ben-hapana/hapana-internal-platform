@@ -1,76 +1,66 @@
+import { firestoreAdmin } from '@/lib/firestore-admin'
 import { NextRequest } from 'next/server'
-import { serverTestResultsService } from '@/lib/firestore-admin'
 
 export async function GET(request: NextRequest) {
-  // Set up Server-Sent Events headers
-  const responseHeaders = new Headers({
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Cache-Control'
-  })
-
   const encoder = new TextEncoder()
-  let isConnected = true
-
+  
   const stream = new ReadableStream({
-    start(controller) {
-      // Send initial connection message
-      const initialMessage = `data: ${JSON.stringify({ 
-        type: 'connected', 
-        message: 'Connected to test results stream' 
-      })}\n\n`
-      controller.enqueue(encoder.encode(initialMessage))
-
-      // Set up periodic polling for test results
-      const pollResults = async () => {
-        if (!isConnected) return
+    async start(controller) {
+      try {
+        // Send initial data
+        const results = await firestoreAdmin.getTestResults(undefined, 50)
         
-        try {
-          const results = await serverTestResultsService.getRecent(50)
-          
-          // Send the results as SSE
-          const data = JSON.stringify({
-            type: 'test-results',
-            results: results,
-            timestamp: new Date().toISOString()
-          })
-          
-          const message = `data: ${data}\n\n`
-          controller.enqueue(encoder.encode(message))
-        } catch (error) {
-          console.error('Error polling test results:', error)
-        }
+        const data = JSON.stringify({
+          type: 'initial',
+          data: results,
+          timestamp: new Date().toISOString()
+        })
+        
+        controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+
+        // Set up polling interval for updates
+        const interval = setInterval(async () => {
+          try {
+            const updatedResults = await firestoreAdmin.getTestResults(undefined, 50)
+            
+            const updateData = JSON.stringify({
+              type: 'update',
+              data: updatedResults,
+              timestamp: new Date().toISOString()
+            })
+            
+            controller.enqueue(encoder.encode(`data: ${updateData}\n\n`))
+          } catch (error) {
+            console.error('❌ Stream update error:', error)
+            
+            const errorData = JSON.stringify({
+              type: 'error',
+              error: error instanceof Error ? error.message : 'Unknown error',
+              timestamp: new Date().toISOString()
+            })
+            
+            controller.enqueue(encoder.encode(`data: ${errorData}\n\n`))
+          }
+        }, 5000) // Update every 5 seconds
+
+        // Clean up on close
+        request.signal.addEventListener('abort', () => {
+          clearInterval(interval)
+          controller.close()
+        })
+
+      } catch (error) {
+        console.error('❌ Stream initialization error:', error)
+        controller.error(error)
       }
-
-      // Poll every 5 seconds for new results
-      const pollInterval = setInterval(pollResults, 5000)
-      
-      // Send initial results
-      pollResults()
-
-      // Handle client disconnect
-      request.signal.addEventListener('abort', () => {
-        isConnected = false
-        clearInterval(pollInterval)
-        controller.close()
-      })
-
-      // Send periodic heartbeat to keep connection alive
-      const heartbeat = setInterval(() => {
-        if (isConnected) {
-          const heartbeatMessage = `data: ${JSON.stringify({ 
-            type: 'heartbeat', 
-            timestamp: new Date().toISOString() 
-          })}\n\n`
-          controller.enqueue(encoder.encode(heartbeatMessage))
-        } else {
-          clearInterval(heartbeat)
-        }
-      }, 30000) // Every 30 seconds
     }
   })
 
-  return new Response(stream, { headers: responseHeaders })
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  })
 } 

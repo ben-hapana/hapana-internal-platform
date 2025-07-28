@@ -1,20 +1,19 @@
-import { adminDb } from '@/firebase/firebase-admin'
-import { FieldValue } from 'firebase-admin/firestore'
+import { getAdminDb } from '@/firebase/firebase-admin'
 import { 
-  Issue, 
+  IssueData, 
   IncidentReport, 
-  BrandReference, 
-  LocationReference, 
-  CustomerReference,
-  HappyFoxTicketRef,
-  JiraTicketRef,
+  Brand, 
+  Location, 
+  Customer,
+  HappyFoxTicket,
+  JiraTicket,
+  TicketAttachment,
+  SyncState,
   ProcessingLog,
   HappyFoxTicketUpdate,
-  JiraTicketComment,
-  AttachmentRef,
-  SyncState,
-  SearchIndexMetadata
+  JiraTicketComment
 } from '@/lib/types/issue-intelligence'
+import { Timestamp } from 'firebase-admin/firestore'
 
 // Collections
 const COLLECTIONS = {
@@ -34,71 +33,82 @@ const COLLECTIONS = {
   SEARCH_INDEX_METADATA: 'search-index-metadata'
 } as const
 
-export class IssueIntelligenceFirestoreService {
-  
-  // ============ ISSUES ============
-  
-  async createIssue(issue: Omit<Issue, 'id' | 'created' | 'updated'>): Promise<string> {
+export const firestoreService = {
+  // Issues
+  async createIssue(issueData: Omit<IssueData, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    const adminDb = getAdminDb()
     const docRef = await adminDb.collection(COLLECTIONS.ISSUES).add({
-      ...issue,
-      created: FieldValue.serverTimestamp(),
-      updated: FieldValue.serverTimestamp()
+      ...issueData,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now()
     })
     return docRef.id
-  }
+  },
 
-  async updateIssue(id: string, updates: Partial<Issue>): Promise<void> {
+  async updateIssue(id: string, updates: Partial<IssueData>): Promise<void> {
+    const adminDb = getAdminDb()
     await adminDb.collection(COLLECTIONS.ISSUES).doc(id).update({
       ...updates,
-      updated: FieldValue.serverTimestamp()
+      updatedAt: Timestamp.now()
     })
-  }
+  },
 
-  async getIssue(id: string): Promise<Issue | null> {
+  async getIssue(id: string): Promise<IssueData | null> {
+    const adminDb = getAdminDb()
     const doc = await adminDb.collection(COLLECTIONS.ISSUES).doc(id).get()
-    return doc.exists ? { id: doc.id, ...doc.data() } as Issue : null
-  }
+    if (!doc.exists) return null
+    return { id: doc.id, ...doc.data() } as IssueData
+  },
 
-  async getRecentIssues(limit: number = 50): Promise<Issue[]> {
+  async getIssues(limit: number = 50): Promise<IssueData[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.ISSUES)
-      .orderBy('updated', 'desc')
+      .orderBy('createdAt', 'desc')
       .limit(limit)
       .get()
     
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as Issue))
-  }
+    })) as IssueData[]
+  },
 
-  // ============ INCIDENT REPORTS ============
-
-  async createIncidentReport(report: Omit<IncidentReport, 'id'>): Promise<string> {
-    const docRef = await adminDb.collection(COLLECTIONS.INCIDENT_REPORTS).add(report)
+  // Incident Reports
+  async createIncidentReport(report: Omit<IncidentReport, 'id' | 'createdAt'>): Promise<string> {
+    const adminDb = getAdminDb()
+    const docRef = await adminDb.collection(COLLECTIONS.INCIDENT_REPORTS).add({
+      ...report,
+      createdAt: Timestamp.now()
+    })
     return docRef.id
-  }
+  },
 
-  // ============ BRANDS & LOCATIONS ============
-
-  async getBrand(id: string): Promise<BrandReference | null> {
+  // Brand operations
+  async getBrand(id: string): Promise<Brand | null> {
+    const adminDb = getAdminDb()
     const doc = await adminDb.collection(COLLECTIONS.BRANDS).doc(id).get()
-    return doc.exists ? { id: doc.id, ...doc.data() } as BrandReference : null
-  }
+    if (!doc.exists) return null
+    return { id: doc.id, ...doc.data() } as Brand
+  },
 
-  async createBrand(brand: BrandReference): Promise<void> {
+  async createOrUpdateBrand(brand: Brand): Promise<void> {
+    const adminDb = getAdminDb()
     await adminDb.collection(COLLECTIONS.BRANDS).doc(brand.id).set(brand)
-  }
+  },
 
-  async getAllBrands(): Promise<BrandReference[]> {
+  async getBrands(): Promise<Brand[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb.collection(COLLECTIONS.BRANDS).get()
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as BrandReference))
-  }
+    })) as Brand[]
+  },
 
-  async getLocationsByBrand(brandId: string): Promise<LocationReference[]> {
+  // Location operations
+  async getLocationsByBrand(brandId: string): Promise<Location[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.LOCATIONS)
       .where('brandId', '==', brandId)
@@ -107,216 +117,226 @@ export class IssueIntelligenceFirestoreService {
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as LocationReference))
-  }
+    })) as Location[]
+  },
 
-  async createLocation(location: LocationReference): Promise<void> {
+  async createOrUpdateLocation(location: Location): Promise<void> {
+    const adminDb = getAdminDb()
     await adminDb.collection(COLLECTIONS.LOCATIONS).doc(location.id).set(location)
-  }
+  },
 
-  // ============ CUSTOMERS ============
-
-  async createCustomer(customer: Omit<CustomerReference, 'id'>): Promise<string> {
+  // Customer operations
+  async createCustomer(customer: Omit<Customer, 'id'>): Promise<string> {
+    const adminDb = getAdminDb()
     const docRef = await adminDb.collection(COLLECTIONS.CUSTOMERS).add(customer)
     return docRef.id
-  }
+  },
 
-  async getCustomerByEmail(email: string): Promise<CustomerReference | null> {
+  async getCustomersByBrand(brandId: string): Promise<Customer[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.CUSTOMERS)
-      .where('email', '==', email)
-      .limit(1)
-      .get()
-    
-    return snapshot.empty ? null : {
-      id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data()
-    } as CustomerReference
-  }
-
-  // ============ TICKETS ============
-
-  async createHappyFoxTicket(ticket: HappyFoxTicketRef): Promise<void> {
-    await adminDb.collection(COLLECTIONS.HAPPYFOX_TICKETS).doc(ticket.ticketId).set({
-      ...ticket,
-      lastUpdated: FieldValue.serverTimestamp()
-    })
-  }
-
-  async createJiraTicket(ticket: JiraTicketRef): Promise<void> {
-    await adminDb.collection(COLLECTIONS.JIRA_TICKETS).doc(ticket.key).set({
-      ...ticket,
-      lastUpdated: FieldValue.serverTimestamp()
-    })
-  }
-
-  async getHappyFoxTicket(ticketId: string): Promise<HappyFoxTicketRef | null> {
-    const doc = await adminDb.collection(COLLECTIONS.HAPPYFOX_TICKETS).doc(ticketId).get()
-    return doc.exists ? doc.data() as HappyFoxTicketRef : null
-  }
-
-  async getJiraTicket(ticketKey: string): Promise<JiraTicketRef | null> {
-    const doc = await adminDb.collection(COLLECTIONS.JIRA_TICKETS).doc(ticketKey).get()
-    return doc.exists ? doc.data() as JiraTicketRef : null
-  }
-
-  async getIncidentReport(reportId: string): Promise<IncidentReport | null> {
-    const doc = await adminDb.collection(COLLECTIONS.INCIDENT_REPORTS).doc(reportId).get()
-    return doc.exists ? { id: doc.id, ...doc.data() } as IncidentReport : null
-  }
-
-  async getIncidentReportsByIssue(issueId: string): Promise<IncidentReport[]> {
-    const snapshot = await adminDb
-      .collection(COLLECTIONS.INCIDENT_REPORTS)
-      .where('issueId', '==', issueId)
-      .orderBy('generatedAt', 'desc')
+      .where('brandId', '==', brandId)
       .get()
     
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as IncidentReport))
-  }
+    })) as Customer[]
+  },
 
-  async getIncidentReportByBrand(issueId: string, brandId: string): Promise<IncidentReport | null> {
+  // Ticket operations
+  async storeHappyFoxTicket(ticket: HappyFoxTicket): Promise<void> {
+    const adminDb = getAdminDb()
+    await adminDb.collection(COLLECTIONS.HAPPYFOX_TICKETS).doc(ticket.ticketId).set({
+      ...ticket,
+      lastUpdated: Timestamp.now()
+    })
+  },
+
+  async storeJiraTicket(ticket: JiraTicket): Promise<void> {
+    const adminDb = getAdminDb()
+    await adminDb.collection(COLLECTIONS.JIRA_TICKETS).doc(ticket.key).set({
+      ...ticket,
+      lastUpdated: Timestamp.now()
+    })
+  },
+
+  async getHappyFoxTicket(ticketId: string): Promise<HappyFoxTicket | null> {
+    const adminDb = getAdminDb()
+    const doc = await adminDb.collection(COLLECTIONS.HAPPYFOX_TICKETS).doc(ticketId).get()
+    if (!doc.exists) return null
+    return doc.data() as HappyFoxTicket
+  },
+
+  async getJiraTicket(ticketKey: string): Promise<JiraTicket | null> {
+    const adminDb = getAdminDb()
+    const doc = await adminDb.collection(COLLECTIONS.JIRA_TICKETS).doc(ticketKey).get()
+    if (!doc.exists) return null
+    return doc.data() as JiraTicket
+  },
+
+  async getIncidentReport(reportId: string): Promise<IncidentReport | null> {
+    const adminDb = getAdminDb()
+    const doc = await adminDb.collection(COLLECTIONS.INCIDENT_REPORTS).doc(reportId).get()
+    if (!doc.exists) return null
+    return { id: doc.id, ...doc.data() } as IncidentReport
+  },
+
+  async getRecentIncidentReports(limit: number = 10): Promise<IncidentReport[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.INCIDENT_REPORTS)
-      .where('issueId', '==', issueId)
-      .where('brandId', '==', brandId)
-      .limit(1)
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
       .get()
     
-    return snapshot.empty ? null : {
-      id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data()
-    } as IncidentReport
-  }
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as IncidentReport[]
+  },
 
-  async updateIncidentReportStatus(reportId: string, status: IncidentReport['status']): Promise<void> {
+  async getIncidentReportsByBrand(brandId: string, limit: number = 50): Promise<IncidentReport[]> {
+    const adminDb = getAdminDb()
+    const snapshot = await adminDb
+      .collection(COLLECTIONS.INCIDENT_REPORTS)
+      .where('brandId', '==', brandId)
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get()
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as IncidentReport[]
+  },
+
+  async updateIncidentReport(reportId: string, updates: Partial<IncidentReport>): Promise<void> {
+    const adminDb = getAdminDb()
     await adminDb.collection(COLLECTIONS.INCIDENT_REPORTS).doc(reportId).update({
-      status,
-      updated: FieldValue.serverTimestamp()
+      ...updates,
+      updatedAt: Timestamp.now()
     })
-  }
+  },
 
-  // ============ LOGGING ============
-
+  // Processing logs
   async createProcessingLog(log: Omit<ProcessingLog, 'id' | 'timestamp'>): Promise<string> {
+    const adminDb = getAdminDb()
     const docRef = await adminDb.collection(COLLECTIONS.PROCESSING_LOGS).add({
       ...log,
-      timestamp: FieldValue.serverTimestamp()
+      timestamp: Timestamp.now()
     })
     return docRef.id
-  }
+  },
 
-  // ============ HAPPYFOX TICKET UPDATES ============
-
-  async createHappyFoxTicketUpdate(update: Omit<HappyFoxTicketUpdate, 'id'>): Promise<string> {
+  // Ticket updates
+  async createTicketUpdate(update: Omit<HappyFoxTicketUpdate, 'id' | 'timestamp'>): Promise<string> {
+    const adminDb = getAdminDb()
     const docRef = await adminDb.collection(COLLECTIONS.HAPPYFOX_TICKET_UPDATES).add({
       ...update,
-      created: FieldValue.serverTimestamp()
+      timestamp: Timestamp.now()
     })
     return docRef.id
-  }
+  },
 
-  async getHappyFoxTicketUpdates(ticketId: string): Promise<HappyFoxTicketUpdate[]> {
+  async getTicketUpdates(ticketId: string): Promise<HappyFoxTicketUpdate[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.HAPPYFOX_TICKET_UPDATES)
       .where('ticketId', '==', ticketId)
-      .orderBy('created', 'desc')
+      .orderBy('timestamp', 'desc')
       .get()
     
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as HappyFoxTicketUpdate))
-  }
+    })) as HappyFoxTicketUpdate[]
+  },
 
-  // ============ JIRA TICKET COMMENTS ============
-
-  async createJiraTicketComment(comment: Omit<JiraTicketComment, 'id'>): Promise<string> {
+  // Jira comments
+  async createJiraComment(comment: Omit<JiraTicketComment, 'id'>): Promise<string> {
+    const adminDb = getAdminDb()
     const docRef = await adminDb.collection(COLLECTIONS.JIRA_TICKET_COMMENTS).add(comment)
     return docRef.id
-  }
+  },
 
-  async getJiraTicketComments(ticketKey: string): Promise<JiraTicketComment[]> {
+  async getJiraComments(ticketKey: string): Promise<JiraTicketComment[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.JIRA_TICKET_COMMENTS)
       .where('ticketKey', '==', ticketKey)
-      .orderBy('created', 'asc')
+      .orderBy('createdAt', 'asc')
       .get()
     
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as JiraTicketComment))
-  }
+    })) as JiraTicketComment[]
+  },
 
-
-
-  // ============ TICKET ATTACHMENTS ============
-
-  async createAttachment(attachment: Omit<AttachmentRef, 'id'>): Promise<string> {
+  // Attachments
+  async createAttachment(attachment: Omit<TicketAttachment, 'id'>): Promise<string> {
+    const adminDb = getAdminDb()
     const docRef = await adminDb.collection(COLLECTIONS.TICKET_ATTACHMENTS).add(attachment)
     return docRef.id
-  }
+  },
 
-  async getAttachmentsBySource(sourceId: string, source: 'happyfox' | 'jira'): Promise<AttachmentRef[]> {
+  async getAttachments(ticketId: string, source: 'happyfox' | 'jira'): Promise<TicketAttachment[]> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.TICKET_ATTACHMENTS)
-      .where('sourceId', '==', sourceId)
+      .where('ticketId', '==', ticketId)
       .where('source', '==', source)
-      .orderBy('created', 'desc')
       .get()
     
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    } as AttachmentRef))
-  }
+    })) as TicketAttachment[]
+  },
 
-  // ============ SYNC STATE MANAGEMENT ============
-
+  // Sync state
   async updateSyncState(syncState: SyncState): Promise<void> {
+    const adminDb = getAdminDb()
     await adminDb.collection(COLLECTIONS.SYNC_STATE).doc(syncState.id).set(syncState)
-  }
+  },
 
-  async getSyncState(id: 'happyfox' | 'jira'): Promise<SyncState | null> {
+  async getSyncState(id: string): Promise<SyncState | null> {
+    const adminDb = getAdminDb()
     const doc = await adminDb.collection(COLLECTIONS.SYNC_STATE).doc(id).get()
-    return doc.exists ? doc.data() as SyncState : null
-  }
+    if (!doc.exists) return null
+    return doc.data() as SyncState
+  },
 
-  // ============ SEARCH INDEX METADATA ============
-
-  async createSearchIndexMetadata(metadata: Omit<SearchIndexMetadata, 'id'>): Promise<string> {
+  // Search index metadata
+  async createSearchIndexMetadata(metadata: { collection: string, lastIndexed: Timestamp, documentCount: number }): Promise<string> {
+    const adminDb = getAdminDb()
     const docRef = await adminDb.collection(COLLECTIONS.SEARCH_INDEX_METADATA).add({
       ...metadata,
-      lastIndexed: FieldValue.serverTimestamp()
+      createdAt: Timestamp.now()
     })
     return docRef.id
-  }
+  },
 
-  async updateSearchIndexMetadata(id: string, updates: Partial<SearchIndexMetadata>): Promise<void> {
+  async updateSearchIndexMetadata(id: string, updates: { lastIndexed: Timestamp, documentCount: number }): Promise<void> {
+    const adminDb = getAdminDb()
     await adminDb.collection(COLLECTIONS.SEARCH_INDEX_METADATA).doc(id).update({
       ...updates,
-      lastIndexed: FieldValue.serverTimestamp()
+      updatedAt: Timestamp.now()
     })
-  }
+  },
 
-  async getSearchIndexMetadata(sourceCollection: string, sourceDocumentId: string): Promise<SearchIndexMetadata | null> {
+  async getSearchIndexMetadata(): Promise<Array<{ id: string, collection: string, lastIndexed: Timestamp, documentCount: number }>> {
+    const adminDb = getAdminDb()
     const snapshot = await adminDb
       .collection(COLLECTIONS.SEARCH_INDEX_METADATA)
-      .where('sourceCollection', '==', sourceCollection)
-      .where('sourceDocumentId', '==', sourceDocumentId)
-      .limit(1)
+      .orderBy('createdAt', 'desc')
       .get()
     
-    return snapshot.empty ? null : {
-      id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data()
-    } as SearchIndexMetadata
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Array<{ id: string, collection: string, lastIndexed: Timestamp, documentCount: number }>
   }
-}
-
-// Export singleton instance
-export const firestoreService = new IssueIntelligenceFirestoreService() 
+} 

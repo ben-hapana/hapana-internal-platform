@@ -254,12 +254,23 @@ async function createSampleData() {
     const existingBrand = await firestoreService.getBrand('hapana')
     if (!existingBrand) {
       // Create sample brand
-      await firestoreService.createBrand({
+      await firestoreService.createOrUpdateBrand({
         id: 'hapana',
         name: 'Hapana Fitness',
         code: 'HAP',
-        region: 'North America',
-        memberCount: 350
+        region: 'Auckland',
+        memberCount: 5000
+      })
+
+      // Create sample location
+      await firestoreService.createOrUpdateLocation({
+        id: 'hapana-takapuna',
+        name: 'Hapana Takapuna',
+        brandId: 'hapana',
+        address: '123 Hurstmere Road, Takapuna, Auckland',
+        memberCount: 2500,
+        services: ['gym', 'pool', 'classes'],
+        timezone: 'Pacific/Auckland'
       })
     }
     
@@ -267,7 +278,7 @@ async function createSampleData() {
     const existingLocations = await firestoreService.getLocationsByBrand('hapana')
     if (existingLocations.length === 0) {
       // Create sample locations
-      await firestoreService.createLocation({
+      await firestoreService.createOrUpdateLocation({
         id: 'gym-001',
         name: 'Downtown Gym',
         brandId: 'hapana',
@@ -277,7 +288,7 @@ async function createSampleData() {
         timezone: 'America/New_York'
       })
       
-      await firestoreService.createLocation({
+      await firestoreService.createOrUpdateLocation({
         id: 'gym-002',
         name: 'Uptown Gym',
         brandId: 'hapana',

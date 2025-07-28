@@ -1,4 +1,4 @@
-import { adminDb } from '@/firebase/firebase-admin';
+import { getAdminDb } from '@/firebase/firebase-admin';
 import { algoliaSearchService } from '../search/algolia-search-service';
 import { HappyFoxTicketEvent } from './pubsub-service';
 
@@ -109,6 +109,7 @@ export class TicketProcessor {
     try {
       console.log(`Storing ticket in Firestore: ${ticketId}`);
       
+      const adminDb = getAdminDb();
       const docRef = adminDb.collection('happyfox-tickets').doc(`happyfox_${ticketId}`);
       
       // Create a clean object with only the necessary fields

@@ -1,10 +1,18 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app'
-import { getFirestore } from 'firebase-admin/firestore'
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app'
+import { getFirestore, Firestore } from 'firebase-admin/firestore'
 
-// Initialize Firebase Admin SDK
-function createFirebaseAdminApp() {
+let _adminApp: App | null = null
+let _adminDb: Firestore | null = null
+
+// Initialize Firebase Admin SDK lazily
+function createFirebaseAdminApp(): App {
+  if (_adminApp) {
+    return _adminApp
+  }
+
   if (getApps().length > 0) {
-    return getApps()[0]!
+    _adminApp = getApps()[0]!
+    return _adminApp
   }
 
   // Check if we have all required environment variables
@@ -14,7 +22,7 @@ function createFirebaseAdminApp() {
 
   // If we have service account credentials, use them
   if (projectId && clientEmail && privateKey) {
-    return initializeApp({
+    _adminApp = initializeApp({
       credential: cert({
         projectId,
         clientEmail,
@@ -22,20 +30,32 @@ function createFirebaseAdminApp() {
       }),
       projectId,
     })
+    return _adminApp
   }
 
   // Fallback for development/build time with minimal config
   if (projectId) {
-    return initializeApp({
+    _adminApp = initializeApp({
       projectId,
     })
+    return _adminApp
   }
 
   // Last resort fallback to prevent build errors
-  return initializeApp({
+  _adminApp = initializeApp({
     projectId: 'dummy-project-id',
   })
+  return _adminApp
 }
 
-export const adminApp = createFirebaseAdminApp()
-export const adminDb = getFirestore(adminApp) 
+// Lazy initialization functions that only initialize when called
+export function getAdminApp(): App {
+  return createFirebaseAdminApp()
+}
+
+export function getAdminDb(): Firestore {
+  if (!_adminDb) {
+    _adminDb = getFirestore(getAdminApp())
+  }
+  return _adminDb
+} 

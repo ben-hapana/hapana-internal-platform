@@ -76,12 +76,11 @@ export async function GET(request: NextRequest) {
     
     let reports
     if (brandId) {
-      // Get specific brand report
-      const report = await firestoreService.getIncidentReportByBrand(issueId, brandId)
-      reports = report ? [report] : []
+      // Get reports for specific brand
+      reports = await firestoreService.getIncidentReportsByBrand(brandId)
     } else {
-      // Get all reports for the issue
-      reports = await firestoreService.getIncidentReportsByIssue(issueId)
+      // Get recent incident reports
+      reports = await firestoreService.getRecentIncidentReports(10)
     }
 
     return NextResponse.json({

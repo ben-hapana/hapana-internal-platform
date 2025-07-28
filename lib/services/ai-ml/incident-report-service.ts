@@ -92,8 +92,8 @@ export class IncidentReportService {
           communicationPlan: generatedReport.brandSpecificNotes
         },
         metadata: {
-          totalAffectedMembers: issue.brandImpacts.find(impact => impact.brandId === request.brandId)?.totalAffectedMembers || 0,
-          affectedLocations: issue.brandImpacts.find(impact => impact.brandId === request.brandId)?.locationImpacts?.length || 0,
+          totalAffectedMembers: issue.brandImpacts.find((impact: BrandImpact) => impact.brandId === request.brandId)?.totalAffectedMembers || 0,
+          affectedLocations: issue.brandImpacts.find((impact: BrandImpact) => impact.brandId === request.brandId)?.locationImpacts?.length || 0,
           estimatedDowntime: generatedReport.estimatedResolution || 'Unknown',
           businessImpact: request.severity,
           customerSegments: ['All Members']

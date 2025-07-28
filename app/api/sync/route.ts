@@ -309,7 +309,7 @@ export async function POST(request: NextRequest) {
               }
               
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              await firestoreService.createHappyFoxTicket(happyFoxTicket as any)
+              await firestoreService.storeHappyFoxTicket(happyFoxTicket as any)
               results.push({ ticketId: ticketData.id, status: 'success' })
               
             } catch (error) {
@@ -554,7 +554,8 @@ export async function POST(request: NextRequest) {
 
         // Step 2: Save to Firestore
         console.log('💾 Step 2: Saving to Firestore...')
-        const { adminDb } = await import('@/firebase/firebase-admin')
+        const { getAdminDb } = await import('@/firebase/firebase-admin')
+        const adminDb = getAdminDb()
         const { FieldValue } = await import('firebase-admin/firestore')
         
         const firestoreTicket = {
@@ -768,7 +769,8 @@ export async function POST(request: NextRequest) {
 
         // Step 2: Batch save to Firestore
         console.log('💾 Step 2: Batch saving to Firestore...')
-        const { adminDb } = await import('@/firebase/firebase-admin')
+        const { getAdminDb } = await import('@/firebase/firebase-admin')
+        const adminDb = getAdminDb()
         const { FieldValue } = await import('firebase-admin/firestore')
         
         const batch = adminDb.batch()
@@ -985,7 +987,8 @@ export async function POST(request: NextRequest) {
         // Step 2: Process tickets in batches
         console.log('💾 Step 2: Processing tickets in batches...')
         const BATCH_SIZE = 10 // Even more conservative batch size
-        const { adminDb } = await import('@/firebase/firebase-admin')
+        const { getAdminDb } = await import('@/firebase/firebase-admin')
+        const adminDb = getAdminDb()
         const { FieldValue } = await import('firebase-admin/firestore')
         const { AlgoliaSearchService } = await import('@/lib/services/search/algolia-search-service')
         const algoliaService = new AlgoliaSearchService()

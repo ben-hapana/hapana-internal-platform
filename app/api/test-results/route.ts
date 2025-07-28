@@ -1,31 +1,32 @@
+import { firestoreAdmin } from '@/lib/firestore-admin'
 import { NextRequest, NextResponse } from 'next/server'
-import { serverTestResultsService } from '@/lib/firestore-admin'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const environment = searchParams.get('environment') || undefined
     const limitParam = searchParams.get('limit')
-    const limit = limitParam ? parseInt(limitParam, 10) : 20
+    const limit = limitParam ? parseInt(limitParam, 10) : 50
 
-    // Validate limit parameter
-    if (isNaN(limit) || limit < 1 || limit > 100) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid limit parameter. Must be between 1 and 100.' },
-        { status: 400 }
-      )
-    }
+    console.log(`🔍 Fetching test results - Environment: ${environment || 'all'}, Limit: ${limit}`)
 
-    const results = await serverTestResultsService.getRecent(limit)
+    const results = await firestoreAdmin.getTestResults(environment, limit)
 
     return NextResponse.json({
       success: true,
-      results: results
+      results: results,
+      count: results.length,
+      environment: environment || 'all',
+      timestamp: new Date().toISOString()
     })
+
   } catch (error) {
-    console.error('Error fetching test results:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch test results' },
-      { status: 500 }
-    )
+    console.error('❌ Failed to fetch test results:', error)
+    
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch test results',
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 } 

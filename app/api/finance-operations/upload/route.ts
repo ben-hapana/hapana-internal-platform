@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
   try {
     // Dynamically import Firebase admin to avoid build-time initialization
     const { getAuth } = await import('firebase-admin/auth')
-    const { adminApp } = await import('@/firebase/firebase-admin')
-    const auth = getAuth(adminApp)
+    const { getAdminApp } = await import('@/firebase/firebase-admin')
+    const auth = getAuth(getAdminApp())
     
     // Verify authentication
     const authHeader = request.headers.get('authorization')
